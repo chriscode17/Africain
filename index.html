@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Positionnement IA — L'Étudiant Africain</title>
+<style>
+  :root{
+    --paper:#FAF9F6;
+    --ink:#211F2E;
+    --ink-soft:#57546B;
+    --accent:#4A3AFF;
+    --accent-tint:#ECEAFF;
+    --line:#E3E0D8;
+    --ok:#1F7A4D;
+    --warn:#B23A2E;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height:1.55;
+  }
+  h1,h2,h3{
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-weight:600;
+    line-height:1.2;
+    margin:0 0 .4em 0;
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:0 20px 120px;}
+
+  /* progress bar */
+  .progress-holder{position:sticky; top:0; background:var(--paper); z-index:10; padding-top:10px;}
+  .progress-track{height:4px; background:var(--line); border-radius:2px; overflow:hidden;}
+  .progress-fill{height:100%; width:0%; background:var(--accent); transition:width .25s ease;}
+
+  header.intro{padding:44px 0 18px;}
+  .kicker{font-size:.8rem; letter-spacing:.02em; color:var(--ink-soft); margin-bottom:10px;}
+  header.intro h1{font-size:1.9rem;}
+  header.intro p{color:var(--ink-soft); margin:.9em 0;}
+  .meta-row{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px; font-size:.88rem; color:var(--ink-soft);}
+  .meta-row span{border-left:2px solid var(--accent); padding-left:8px;}
+
+  fieldset{border:none; margin:0; padding:0;}
+  section.block{padding:34px 0; border-top:1px solid var(--line);}
+  section.block .section-head{display:flex; align-items:baseline; gap:12px; margin-bottom:20px;}
+  section.block .section-num{font-family:Georgia, serif; font-size:1.05rem; color:var(--accent); flex:0 0 auto;}
+  section.block h2{font-size:1.2rem; margin:0;}
+  section.block .section-sub{color:var(--ink-soft); font-size:.92rem; margin:-12px 0 20px 0;}
+
+  .q{margin-bottom:26px;}
+  .q > p.label{font-weight:600; margin:0 0 10px 0; font-size:.98rem;}
+  .q .hint{color:var(--ink-soft); font-size:.85rem; margin:-6px 0 10px 0;}
+
+  .options{display:flex; flex-direction:column; gap:8px;}
+  .opt{
+    display:flex; align-items:flex-start; gap:10px;
+    border:1px solid var(--line); border-radius:6px;
+    padding:10px 12px; cursor:pointer; font-size:.95rem;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .opt:hover{border-color:var(--accent);}
+  .opt input{margin-top:3px; accent-color:var(--accent);}
+  .opt.checked{border-color:var(--accent); background:var(--accent-tint);}
+
+  .likert{display:flex; justify-content:space-between; gap:6px;}
+  .likert .opt{flex:1; flex-direction:column; align-items:center; text-align:center; gap:4px; padding:10px 4px;}
+  .likert .opt span{font-size:.78rem; color:var(--ink-soft);}
+
+  textarea, select, input[type=text]{
+    width:100%; border:1px solid var(--line); border-radius:6px;
+    padding:10px 12px; font-size:.95rem; font-family:inherit; color:var(--ink);
+    background:#fff;
+  }
+  textarea{min-height:80px; resize:vertical;}
+
+  .scale0-10{display:flex; align-items:center; gap:14px;}
+  .scale0-10 input[type=range]{flex:1; accent-color:var(--accent);}
+  .scale0-10 output{font-weight:600; min-width:2ch; text-align:center;}
+
+  .required-mark{color:var(--warn); margin-left:2px;}
+
+  .honeypot{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;}
+
+  .submit-row{padding:36px 0 10px;}
+  button.primary{
+    background:var(--accent); color:#fff; border:none; border-radius:6px;
+    padding:14px 26px; font-size:1rem; font-weight:600; cursor:pointer;
+    width:100%;
+  }
+  button.primary:hover{opacity:.92;}
+  .error-banner{
+    display:none; background:#FBEAE7; border:1px solid var(--warn); color:var(--warn);
+    padding:10px 14px; border-radius:6px; font-size:.9rem; margin-bottom:16px;
+  }
+
+  .thankyou{display:none; padding:60px 0; text-align:center;}
+  .thankyou h2{font-size:1.5rem;}
+  .thankyou .niveau{
+    display:inline-block; margin-top:18px; padding:10px 20px;
+    border-radius:6px; background:var(--accent-tint); color:var(--accent); font-weight:700;
+  }
+  .thankyou p.small{color:var(--ink-soft); font-size:.85rem; margin-top:22px;}
+
+  form#form{display:block;}
+
+  /* admin */
+  .admin-toggle{
+    display:block; text-align:center; margin-top:50px; font-size:.78rem;
+    color:#B9B6AC; text-decoration:none; cursor:pointer; user-select:none;
+  }
+  .admin-panel{
+    display:none; margin-top:14px; border:1px dashed var(--line); border-radius:6px;
+    padding:16px; font-size:.85rem; color:var(--ink-soft);
+  }
+  .admin-panel.open{display:block;}
+  .admin-panel .row{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;}
+  .admin-panel button{
+    background:var(--ink); color:#fff; border:none; border-radius:5px;
+    padding:8px 14px; font-size:.82rem; cursor:pointer;
+  }
+  .admin-panel button.danger{background:var(--warn);}
+</style>
+</head>
+<body>
+
+<div class="progress-holder">
+  <div class="wrap" style="padding-bottom:0;">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ===================== INTRODUCTION ===================== -->
+  <header class="intro">
+    <div class="kicker">Test de positionnement IA — L'Étudiant Africain</div>
+    <h1>Où en êtes-vous avec l'intelligence artificielle ?</h1>
+    <p>
+      Bonjour,
+Dans le cadre des formations que nous offrons chez L'Étudiant Africain, vous êtes convié(e) à remplir ce formulaire d'évaluation.
+L'objectif de cette démarche est d'évaluer votre niveau actuel afin de vous orienter au mieux vers le parcours adapté parmi nos trois niveaux : Débutant, Avancé ou Expert.
+Merci de bien vouloir y consacrer quelques minutes. Votre participation est essentielle pour un accompagnement sur mesure.
+    </p>
+    <p>
+      Vos réponses restent anonymes et ne servent qu'à ce classement et à l'analyse globale des besoins
+      en formation. Aucune réponse individuelle ne sera partagée. Le formulaire prend environ 8 à 10 minutes.
+      Merci beaucoup pour votre participation !
+    </p>
+    <div class="meta-row">
+      <span>Anonyme</span>
+      <span>8–10 minutes</span>
+      <span>20 questions</span>
+      <span>Contact : lsilim@lignanconsulting.com</span>
+    </div>
+  </header>
+
+  <div class="error-banner" id="errorBanner">Merci de répondre à toutes les questions obligatoires avant d'envoyer.</div>
+
+  <form id="form" novalidate>
+
+    <!-- honeypot anti-robot -->
+    <div class="honeypot" aria-hidden="true">
+      <label>Laissez ce champ vide<input type="text" name="site_web" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <!-- ===================== SECTION 1 : CONTEXTE ===================== -->
+    <section class="block">
+      <div class="section-head"><span class="section-num">1</span><h2>Votre contexte</h2></div>
+
+      <div class="q">
+        <p class="label">1. Dans quel type de structure travaillez-vous ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q1_secteur">
+          <label class="opt"><input type="radio" name="q1_secteur" value="PME / entreprise privée" required>PME / entreprise privée</label>
+          <label class="opt"><input type="radio" name="q1_secteur" value="ONG / association">ONG / association</label>
+          <label class="opt"><input type="radio" name="q1_secteur" value="Administration publique">Administration publique</label>
+          <label class="opt"><input type="radio" name="q1_secteur" value="Institution de recherche / université">Institution de recherche / université</label>
+          <label class="opt"><input type="radio" name="q1_secteur" value="Média / communication">Média / communication</label>
+          <label class="opt"><input type="radio" name="q1_secteur" value="Autre">Autre</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">2. Quelle est votre fonction principale ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q2_fonction">
+          <label class="opt"><input type="radio" name="q2_fonction" value="Dirigeant(e) / cadre dirigeant" required>Dirigeant(e) / cadre dirigeant</label>
+          <label class="opt"><input type="radio" name="q2_fonction" value="Manager / chef(fe) de service">Manager / chef(fe) de service</label>
+          <label class="opt"><input type="radio" name="q2_fonction" value="Chargé(e) de projet">Chargé(e) de projet</label>
+          <label class="opt"><input type="radio" name="q2_fonction" value="Collaborateur(trice) opérationnel(le)">Collaborateur(trice) opérationnel(le)</label>
+          <label class="opt"><input type="radio" name="q2_fonction" value="Chercheur(euse)">Chercheur(euse)</label>
+          <label class="opt"><input type="radio" name="q2_fonction" value="Autre">Autre</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 2 : USAGE ACTUEL ===================== -->
+    <section class="block">
+      <div class="section-head"><span class="section-num">2</span><h2>Votre usage actuel de l'IA</h2></div>
+
+      <div class="q">
+        <p class="label">3. Depuis combien de temps utilisez-vous des outils d'IA générative dans votre travail ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q3_anciennete">
+          <label class="opt"><input type="radio" name="q3_anciennete" value="Jamais" required>Jamais</label>
+          <label class="opt"><input type="radio" name="q3_anciennete" value="Moins de 3 mois">Moins de 3 mois</label>
+          <label class="opt"><input type="radio" name="q3_anciennete" value="3 à 12 mois">3 à 12 mois</label>
+          <label class="opt"><input type="radio" name="q3_anciennete" value="1 à 2 ans">1 à 2 ans</label>
+          <label class="opt"><input type="radio" name="q3_anciennete" value="Plus de 2 ans">Plus de 2 ans</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">4. Au cours des 30 derniers jours, à quelle fréquence avez-vous utilisé un outil d'IA dans votre travail ?<span class="required-mark">*</span></p>
+        <div class="options likert" data-name="q4_frequence">
+          <label class="opt"><input type="radio" name="q4_frequence" value="0" required><span>Jamais</span></label>
+          <label class="opt"><input type="radio" name="q4_frequence" value="1"><span>Rarement</span></label>
+          <label class="opt"><input type="radio" name="q4_frequence" value="2"><span>Parfois</span></label>
+          <label class="opt"><input type="radio" name="q4_frequence" value="3"><span>Souvent</span></label>
+          <label class="opt"><input type="radio" name="q4_frequence" value="4"><span>Quotidiennement</span></label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">5. Quels outils d'IA avez-vous déjà utilisés ? <em>(plusieurs réponses possibles)</em></p>
+        <div class="options" data-name="q5_outils">
+          <label class="opt"><input type="checkbox" name="q5_outils" value="ChatGPT">ChatGPT</label>
+          <label class="opt"><input type="checkbox" name="q5_outils" value="Claude">Claude</label>
+          <label class="opt"><input type="checkbox" name="q5_outils" value="Gemini">Gemini</label>
+          <label class="opt"><input type="checkbox" name="q5_outils" value="Canva IA / DALL-E / Midjourney">Canva IA / DALL·E / Midjourney</label>
+          <label class="opt"><input type="checkbox" name="q5_outils" value="Copilot">Copilot</label>
+          <label class="opt"><input type="checkbox" name="q5_outils" value="Aucun">Aucun</label>
+          <label class="opt"><input type="checkbox" name="q5_outils" value="Autre">Autre</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">6. Pour quelles tâches utilisez-vous l'IA aujourd'hui ? <em>(plusieurs réponses possibles)</em></p>
+        <div class="options" data-name="q6_taches">
+          <label class="opt"><input type="checkbox" name="q6_taches" value="Rédaction (courriers, rapports, emails)">Rédaction (courriers, rapports, emails)</label>
+          <label class="opt"><input type="checkbox" name="q6_taches" value="Analyse documentaire (synthèse de rapports, contrats)">Analyse documentaire (synthèse de rapports, contrats)</label>
+          <label class="opt"><input type="checkbox" name="q6_taches" value="Supports visuels (présentations, images)">Supports visuels (présentations, images)</label>
+          <label class="opt"><input type="checkbox" name="q6_taches" value="Analyse de données (Excel, tableaux de bord)">Analyse de données (Excel, tableaux de bord)</label>
+          <label class="opt"><input type="checkbox" name="q6_taches" value="Automatisation de tâches répétitives">Automatisation de tâches répétitives</label>
+          <label class="opt"><input type="checkbox" name="q6_taches" value="Veille stratégique">Veille stratégique</label>
+          <label class="opt"><input type="checkbox" name="q6_taches" value="Aucune">Aucune</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 3 : CONNAISSANCES ===================== -->
+    <section class="block">
+      <div class="section-head"><span class="section-num">3</span><h2>Vos connaissances de base</h2></div>
+
+      <div class="q">
+        <p class="label">7. Qu'est-ce qu'une « hallucination » d'IA ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q7_hallucination">
+          <label class="opt"><input type="radio" name="q7_hallucination" value="correct" required>Une réponse formulée avec assurance mais fausse ou inventée</label>
+          <label class="opt"><input type="radio" name="q7_hallucination" value="faux1">Un bug qui empêche l'IA de répondre</label>
+          <label class="opt"><input type="radio" name="q7_hallucination" value="faux2">Une image générée par erreur</label>
+          <label class="opt"><input type="radio" name="q7_hallucination" value="nsp">Je ne sais pas</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">8. « Je sais structurer une demande (prompt) précise pour obtenir un résultat pertinent »<span class="required-mark">*</span></p>
+        <div class="options likert" data-name="q8_prompt">
+          <label class="opt"><input type="radio" name="q8_prompt" value="1" required><span>Pas du tout d'accord</span></label>
+          <label class="opt"><input type="radio" name="q8_prompt" value="2"><span>Pas d'accord</span></label>
+          <label class="opt"><input type="radio" name="q8_prompt" value="3"><span>Neutre</span></label>
+          <label class="opt"><input type="radio" name="q8_prompt" value="4"><span>D'accord</span></label>
+          <label class="opt"><input type="radio" name="q8_prompt" value="5"><span>Tout à fait d'accord</span></label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">9. « Je vérifie systématiquement les informations produites par une IA avant de les utiliser »<span class="required-mark">*</span></p>
+        <div class="options likert" data-name="q9_verification">
+          <label class="opt"><input type="radio" name="q9_verification" value="1" required><span>Pas du tout d'accord</span></label>
+          <label class="opt"><input type="radio" name="q9_verification" value="2"><span>Pas d'accord</span></label>
+          <label class="opt"><input type="radio" name="q9_verification" value="3"><span>Neutre</span></label>
+          <label class="opt"><input type="radio" name="q9_verification" value="4"><span>D'accord</span></label>
+          <label class="opt"><input type="radio" name="q9_verification" value="5"><span>Tout à fait d'accord</span></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 4 : CONCEPTION / AUTOMATISATION ===================== -->
+    <section class="block">
+      <div class="section-head"><span class="section-num">4</span><h2>Conception et automatisation</h2></div>
+      <p class="section-sub">Ces questions portent sur des réalisations concrètes, pas sur votre ressenti.</p>
+
+      <div class="q">
+        <p class="label">10. Avez-vous déjà créé un assistant IA personnalisé (GPT, Gem, Projet configuré) pour une tâche récurrente ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q10_assistant">
+          <label class="opt"><input type="radio" name="q10_assistant" value="oui" required>Oui</label>
+          <label class="opt"><input type="radio" name="q10_assistant" value="non">Non</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">11. Avez-vous déjà mis en place une automatisation reliant l'IA à d'autres outils (Make, Zapier, n8n, Power Automate...) ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q11_automatisation">
+          <label class="opt"><input type="radio" name="q11_automatisation" value="oui" required>Oui</label>
+          <label class="opt"><input type="radio" name="q11_automatisation" value="non">Non</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">12. Avez-vous déjà conçu ou supervisé un agent IA qui exécute plusieurs actions de façon autonome (avec validation humaine) ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q12_agent">
+          <label class="opt"><input type="radio" name="q12_agent" value="oui" required>Oui</label>
+          <label class="opt"><input type="radio" name="q12_agent" value="non">Non</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">13. Sur une échelle de 0 à 10, à quel point vous sentez-vous capable de former un(e) collègue à l'IA ?<span class="required-mark">*</span></p>
+        <div class="scale0-10">
+          <span>0</span>
+          <input type="range" id="q13_range" name="q13_former" min="0" max="10" value="0" required>
+          <output id="q13_out">0</output>
+          <span>10</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 5 : GOUVERNANCE / SÉCURITÉ / BUDGET ===================== -->
+    <section class="block">
+      <div class="section-head"><span class="section-num">5</span><h2>Gouvernance, sécurité et budget</h2></div>
+
+      <div class="q">
+        <p class="label">14. Votre organisation dispose-t-elle d'une charte ou d'une politique d'usage de l'IA (protection des données, outils autorisés) ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q14_charte">
+          <label class="opt"><input type="radio" name="q14_charte" value="oui" required>Oui</label>
+          <label class="opt"><input type="radio" name="q14_charte" value="non">Non</label>
+          <label class="opt"><input type="radio" name="q14_charte" value="nsp">Je ne sais pas</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">15. Un(e) collègue vous demande de faire analyser des contrats clients confidentiels par un outil IA gratuit en ligne. Que faites-vous ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q15_securite">
+          <label class="opt"><input type="radio" name="q15_securite" value="correct" required>Je refuse cette méthode et je propose une solution sécurisée (anonymisation ou outil approuvé)</label>
+          <label class="opt"><input type="radio" name="q15_securite" value="faux1">Je le fais, cela fait gagner du temps</label>
+          <label class="opt"><input type="radio" name="q15_securite" value="faux2">Je le fais mais en retirant seulement les noms</label>
+          <label class="opt"><input type="radio" name="q15_securite" value="faux3">Je ne sais pas ce que je ferais</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">16. Suivez-vous le budget ou le coût lié aux outils IA de votre organisation (abonnements, consommation) ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q16_budget">
+          <label class="opt"><input type="radio" name="q16_budget" value="oui" required>Oui</label>
+          <label class="opt"><input type="radio" name="q16_budget" value="non">Non</label>
+          <label class="opt"><input type="radio" name="q16_budget" value="nsp">Je ne sais pas</label>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">17. Avez-vous déjà mesuré ou chiffré le gain (temps, coût, revenu) apporté par une solution IA dans votre organisation ?<span class="required-mark">*</span></p>
+        <div class="options" data-name="q17_valeur">
+          <label class="opt"><input type="radio" name="q17_valeur" value="oui" required>Oui</label>
+          <label class="opt"><input type="radio" name="q17_valeur" value="non">Non</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SECTION 6 : BILAN ===================== -->
+    <section class="block">
+      <div class="section-head"><span class="section-num">6</span><h2>Pour finir</h2></div>
+
+      <div class="q">
+        <p class="label">18. Sur une échelle de 0 à 10, comment évaluez-vous votre niveau global de maîtrise de l'IA dans votre travail ?<span class="required-mark">*</span></p>
+        <div class="scale0-10">
+          <span>0</span>
+          <input type="range" id="q18_range" name="q18_autoeval" min="0" max="10" value="0" required>
+          <output id="q18_out">0</output>
+          <span>10</span>
+        </div>
+      </div>
+
+      <div class="q">
+        <p class="label">19. Décrivez en une phrase la dernière tâche pour laquelle vous avez utilisé l'IA.</p>
+        <textarea name="q19_ouverte" maxlength="300" placeholder="Ex. : résumer un rapport de 20 pages pour ma direction"></textarea>
+      </div>
+
+      <div class="q">
+        <p class="label">20. Quel est votre niveau d'études ?<span class="required-mark">*</span></p>
+        <select name="q20_etudes" required>
+          <option value="" disabled selected>Choisissez une réponse</option>
+          <option value="Bac ou moins">Bac ou moins</option>
+          <option value="Bac+2">Bac+2</option>
+          <option value="Bac+3">Bac+3</option>
+          <option value="Bac+5 et plus">Bac+5 et plus</option>
+        </select>
+      </div>
+    </section>
+
+    <div class="submit-row">
+      <button type="submit" class="primary">Envoyer mes réponses</button>
+    </div>
+  </form>
+
+  <!-- ===================== MERCI ===================== -->
+  <div class="thankyou" id="thankyou">
+    <h2>Merci pour votre participation !</h2>
+    <p>Vos réponses ont bien été enregistrées.</p>
+    <div class="niveau" id="niveauResult"></div>
+    <p class="small">D'après ce test rapide — le formateur affinera ce positionnement lors de l'entretien d'inscription.</p>
+  </div>
+
+  <!-- ===================== ADMIN (Chris uniquement) ===================== -->
+  <a class="admin-toggle" id="adminToggle">Administration</a>
+  <div class="admin-panel" id="adminPanel">
+    <div class="row">
+      <span id="adminCount">0 réponse enregistrée sur cet appareil</span>
+      <span></span>
+    </div>
+    <div class="row">
+      <button id="exportBtn" type="button">Exporter en CSV</button>
+      <button id="clearBtn" type="button" class="danger">Vider les réponses</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Config ----------
+  // Renseignez ici l'URL de votre webhook n8n si vous voulez aussi envoyer
+  // chaque réponse vers Excel Online en direct. Laissez vide pour un
+  // fonctionnement 100% local (recommandé pour une collecte en face-à-face
+  // sur un seul appareil, avec export CSV manuel ensuite).
+  var WEBHOOK_URL = "";
+
+  var STORAGE_KEY = "positionnement_ia_reponses";
+
+  var form = document.getElementById("form");
+  var progressFill = document.getElementById("progressFill");
+  var errorBanner = document.getElementById("errorBanner");
+  var thankyou = document.getElementById("thankyou");
+  var niveauResult = document.getElementById("niveauResult");
+
+  var COLUMNS = [
+    "horodatage","q1_secteur","q2_fonction","q3_anciennete","q4_frequence",
+    "q5_outils","q6_taches","q7_hallucination","q8_prompt","q9_verification",
+    "q10_assistant","q11_automatisation","q12_agent","q13_former",
+    "q14_charte","q15_securite","q16_budget","q17_valeur",
+    "q18_autoeval","q19_ouverte","q20_etudes","niveau"
+  ];
+
+  // ---------- Visual state for radio/checkbox options ----------
+  form.addEventListener("change", function(e){
+    if(e.target.matches('input[type=radio]')){
+      var group = form.querySelectorAll('input[name="'+e.target.name+'"]');
+      group.forEach(function(inp){ inp.closest(".opt").classList.toggle("checked", inp.checked); });
+    }
+    if(e.target.matches('input[type=checkbox]')){
+      e.target.closest(".opt").classList.toggle("checked", e.target.checked);
+    }
+    updateProgress();
+  });
+
+  var q13Range = document.getElementById("q13_range");
+  var q13Out = document.getElementById("q13_out");
+  q13Range.addEventListener("input", function(){ q13Out.textContent = q13Range.value; });
+
+  var q18Range = document.getElementById("q18_range");
+  var q18Out = document.getElementById("q18_out");
+  q18Range.addEventListener("input", function(){ q18Out.textContent = q18Range.value; });
+
+  function updateProgress(){
+    var required = form.querySelectorAll("[required]");
+    var groups = {};
+    required.forEach(function(el){
+      if(el.type === "radio"){ groups[el.name] = groups[el.name] || form.querySelector('input[name="'+el.name+'"]:checked'); }
+      else { groups[el.name+Math.random()] = el.value.trim().length>0 || el.tagName==="SELECT" ? (el.value!=="") : true; }
+    });
+    var keys = Object.keys(groups);
+    var filled = keys.filter(function(k){ return groups[k]; }).length;
+    var pct = keys.length ? Math.round((filled/keys.length)*100) : 0;
+    progressFill.style.width = pct+"%";
+  }
+
+  // ---------- Scoring / classification ----------
+  function classify(d){
+    var boolAssistant = d.q10_assistant === "oui";
+    var boolAutomatisation = d.q11_automatisation === "oui";
+    var boolAgent = d.q12_agent === "oui";
+    var boolCharte = d.q14_charte === "oui";
+    var boolBudget = d.q16_budget === "oui";
+    var boolValeur = d.q17_valeur === "oui";
+    var secuOK = d.q15_securite === "correct";
+    var freq = parseInt(d.q4_frequence, 10) || 0;
+
+    var gouvernanceCount = [boolCharte, boolBudget, boolValeur].filter(Boolean).length;
+
+    if(boolAgent && secuOK && gouvernanceCount >= 2){
+      return "Expert";
+    }
+    if((boolAssistant || boolAutomatisation || boolAgent) && freq >= 2){
+      return "Avancé";
+    }
+    return "Débutant";
+  }
+
+  // ---------- CSV helpers ----------
+  function csvEscape(val){
+    val = (val === undefined || val === null) ? "" : String(val);
+    if(/[",\n;]/.test(val)){
+      val = '"' + val.replace(/"/g,'""') + '"';
+    }
+    return val;
+  }
+
+  function toCSV(rows){
+    var lines = [COLUMNS.map(csvEscape).join(",")];
+    rows.forEach(function(row){
+      lines.push(COLUMNS.map(function(c){ return csvEscape(row[c]); }).join(","));
+    });
+    return lines.join("\r\n");
+  }
+
+  function loadResponses(){
+    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch(e){ return []; }
+  }
+  function saveResponses(list){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  function downloadCSV(){
+    var rows = loadResponses();
+    var csv = "\uFEFF" + toCSV(rows); // BOM pour un bon affichage des accents dans Excel
+    var blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "positionnement_ia_" + new Date().toISOString().slice(0,10) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- Submit ----------
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+
+    if(form.site_web.value.trim() !== ""){
+      // honeypot rempli -> probable robot, on ignore silencieusement
+      return;
+    }
+
+    if(!form.checkValidity()){
+      form.reportValidity();
+      errorBanner.style.display = "block";
+      errorBanner.scrollIntoView({behavior:"smooth", block:"center"});
+      return;
+    }
+    errorBanner.style.display = "none";
+
+    var fd = new FormData(form);
+    var data = {};
+    COLUMNS.forEach(function(c){ data[c] = ""; });
+    data.horodatage = new Date().toISOString();
+
+    // champs simples
+    ["q1_secteur","q2_fonction","q3_anciennete","q4_frequence","q7_hallucination",
+     "q8_prompt","q9_verification","q10_assistant","q11_automatisation","q12_agent",
+     "q14_charte","q15_securite","q16_budget","q17_valeur","q19_ouverte","q20_etudes"
+    ].forEach(function(name){ data[name] = fd.get(name) || ""; });
+
+    data.q13_former = form.q13_range.value;
+    data.q18_autoeval = form.q18_range.value;
+
+    // champs à cases multiples
+    data.q5_outils = fd.getAll("q5_outils").join(" ; ");
+    data.q6_taches = fd.getAll("q6_taches").join(" ; ");
+
+    data.niveau = classify(data);
+
+    // sauvegarde locale (toujours)
+    var all = loadResponses();
+    all.push(data);
+    saveResponses(all);
+    refreshAdminCount();
+
+    // envoi optionnel vers un webhook (Excel Online via n8n, par ex.)
+    if(WEBHOOK_URL){
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      }).catch(function(){ /* échec silencieux : la réponse reste stockée localement */ });
+    }
+
+    form.style.display = "none";
+    document.querySelector(".progress-holder").style.display = "none";
+    thankyou.style.display = "block";
+    niveauResult.textContent = "Niveau suggéré : " + data.niveau;
+  });
+
+  // ---------- Admin ----------
+  var adminToggle = document.getElementById("adminToggle");
+  var adminPanel = document.getElementById("adminPanel");
+  var adminCount = document.getElementById("adminCount");
+
+  function refreshAdminCount(){
+    var n = loadResponses().length;
+    adminCount.textContent = n + (n>1 ? " réponses enregistrées sur cet appareil" : " réponse enregistrée sur cet appareil");
+  }
+
+  adminToggle.addEventListener("click", function(){
+    adminPanel.classList.toggle("open");
+    refreshAdminCount();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", downloadCSV);
+  document.getElementById("clearBtn").addEventListener("click", function(){
+    if(confirm("Supprimer définitivement toutes les réponses enregistrées sur cet appareil ?")){
+      localStorage.removeItem(STORAGE_KEY);
+      refreshAdminCount();
+    }
+  });
+
+  refreshAdminCount();
+  updateProgress();
+})();
+</script>
+</body>
+</html>
